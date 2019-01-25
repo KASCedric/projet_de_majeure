@@ -1,0 +1,233 @@
+* utils.hpp : 
+
+	-> defines :
+		. dimensions de l'ecran
+		. dimensions de la grille (en mode combat)
+		. position par defaut du joueur sur la grille (en mode combat)
+		. Hps joueur et ennemis
+		. duree d'une animation
+
+	-> enum : Action du joueur et des ennemis (ATTACK, UP, DOWN,..)
+ 
+	-> Classes :
+		
+		- position : 
+			     . pour gerer le positionnement du joueur, des ennemis et des obstacles dans la grille (en mode combat)
+
+			     . Attributs : int ligne; int colonne. 
+
+
+		- objet : 
+			     . un objet dans le monde 3D
+
+			     . Attributs : position p, int HP, int id. 
+
+		
+		- person : hérite de objet
+
+			     . qui pourra être un allier ou un ennemi
+
+			     . Attributs : position p, int HP, int id, is::IAnimatedMeshSceneNode *node (model 3D).
+
+		- player : hérite de person
+
+			     . un joueur
+
+			     . Attributs : position p, int HP, int id, is::IAnimatedMeshSceneNode *node (model 3D).
+
+		- enemy : hérite de person
+
+			     . un ennemi
+
+			     . Attributs : position p, int HP, int id, is::IAnimatedMeshSceneNode *node (model 3D).
+
+		- scene3D : 
+
+			     . pour pouvoir ajouter les collisions propres à la map à la camera et aux nodes présents dans la scène
+
+			     . Attributs : is::IMeshSceneNode *nodemodel 3D de la map), scene::ITriangleSelector *selector (selector à utilisé pour les collisions) .
+
+
+**************************************************************************************
+
+* MyEventReceiver.[ch]pp
+
+
+ -> Pour les events
+
+ -> Attributs : 
+
+	- bool button_pressed; int  old_x, old_y; float speed = 3; // pour les mouvements de la souris et du personnage
+
+	- bool isOpened = true; pour afficher et cacher le menu des items
+
+	- GameManager *gmngr; // correspondra à notre gameManager
+
+	- Action act; // les actions effectuées en fonction des touches du clavier
+
+
+
+ -> Methodes : 
+
+	- bool OnEvent(const irr::SEvent &event); // la base
+
+	- bool keyboard_combat(const irr::SEvent &event);
+	  bool mouse_combat(const irr::SEvent &event); // pour le combat
+
+	- bool keyboard_promenade(const irr::SEvent &event);
+	  bool mouse_promenade(const irr::SEvent &event); 
+	  bool gui_manage(const irr::SEvent &event); // pour la promenade
+
+
+
+**************************************************************************************
+
+* GameManager.[ch]pp
+
+
+
+ -> pour manager le jeu
+
+ -> contenu : 
+
+	- Tout ce qui concerne le joueur :
+
+	  . std::vector<player*> j1; // j'ai mis un vecteur mais il contient un seul élément. C'est juste que m'assurer de bien recupérer le joueur qd il existe et un pointeur NULL quand il est retiré de la scène. 
+
+	  . bool addPlayer(position p, int HP, irr::scene::IAnimatedMesh *mesh, irr::video::ITexture* texture, ic::vector3df pos3D);
+	  
+	  . bool removePlayer();
+    
+	  . bool isPlayerAlive();
+
+    	  . player *getPlayer(); // avant de get il faut verifier que le pointeur est non NULL
+	
+ 
+
+
+
+	- Tout ce qui concerne les ennemis :
+
+	  . std::vector<enemy*> mechant;
+	  . std::vector<int> enemyID; // pour bien gerer les ennemis ajoutes
+
+	  . bool addEnemy(position p, int HP, irr::scene::IAnimatedMesh *mesh, irr::video::ITexture* texture, ic::vector3df pos3D);
+
+	  . bool removeEnemy(int id);
+    
+	  . bool isEnemyAlive(int id);
+
+    	  . enemy *getEnemy(int id); // avant de get il faut verifier que le pointeur est non NULL
+	
+ 
+
+
+
+
+	- Tout ce qui concerne la grille (en mode combat) :
+
+	  . std::vector<gridMapping*> grid; // il n'y en a qu'une sele dans le vecteur
+
+	  . bool addGridMapping(int width, int height, ITimer *Timer);
+
+	  . bool removeGridMapping();
+    
+	  . gridMapping *getGridMapping(); // avant de get il faut verifier que le pointeur est non NULL
+	
+ 
+
+
+
+
+	- Tout ce qui concerne les cameras :
+
+	  . std::vector<scene::ICameraSceneNode*> cameraCombat; // il n'y en a qu'une sele dans le vecteur
+
+	  . std::vector<scene::ICameraSceneNode*> cameraJeuLibre; // il n'y en a qu'une sele dans le vecteur
+
+	  . bool addCameraCombat();
+
+	  . bool removeCameraCombat();
+    
+	  . scene::ICameraSceneNode *getCameraCombat(); // avant de get il faut verifier que le pointeur est non NULL
+	
+ 	  . bool addCameraJeuLibre();
+
+	  . bool removeCameraJeuLibre();
+    
+	  . scene::ICameraSceneNode *getCameraJeuLibre(); // avant de get il faut verifier que le pointeur est non NULL
+
+
+
+
+
+
+- Tout ce qui concerne les animations :
+
+    . bool isFin = 1; // pour savoir quand fini une animation
+    . int currentAnimationTime; // heure de debut d'une animation
+
+    . void animEnemy(int id, bool voieLibre, Action act); // animation a jouer pour l'ennemi (du coup inutilisee)
+
+    . void animPlayer(bool voieLibre, Action act); // animation pour le joueur
+    
+    . void playAnimation(bool voieLibre, Action act, is::IAnimatedMeshSceneNode *perso);
+
+    . void animator(int nombreCasesHorizontales, int nombreCasesVerticales, is::IAnimatedMeshSceneNode *perso);
+
+    . void animATTACK(is::IAnimatedMeshSceneNode *perso);
+
+    // ces 4 anim sont inutilisees
+    void animUP(is::IAnimatedMeshSceneNode *perso);
+    void animDOWN(is::IAnimatedMeshSceneNode *perso);
+    void animLEFT(is::IAnimatedMeshSceneNode *perso);
+    void animRIGHT(is::IAnimatedMeshSceneNode *perso);
+
+
+
+
+
+- Tout ce qui concerne la scene 3D :
+
+    . std::vector<scene3D*> mapScene3D;
+
+    . ig::IGUIWindow *itemWindow; // la fnetre des items
+
+    . std::vector<iv::ITexture*> loadGif(int nbFrame, std::wstring nomGeneral, iv::IVideoDriver *driver); // charge un gif
+
+    . void playVideo(std::vector<iv::ITexture*> frameVector, int nbFrame, ig::IGUIImage *box, IrrlichtDevice *device); // lire une video
+
+    . void createMenu(ig::IGUIEnvironment *gui); // creer le menu
+
+    . void createItemWindow(ig::IGUIEnvironment *gui); // construction de la fenetre des items
+
+    . bool addMapScene3D();
+
+    . bool removeMapScene3D();
+
+    . scene3D *getMapScene3D();
+
+
+
+- Tout ce qui concerne le gestionnaire de jeu :
+
+    
+    . bool isCombat; // : 1 => le combat commence dans la scene 2D , appelle de la fonction gestion combat()
+    
+    . bool isPromenade; // : 1 => le joueur se promene dans le monde 3D, appelle de la fonction gestion promenade()
+    
+    . void combat(irr::ITimer *Timer); // quand le combat commence, on retire tout ce qui a rapport avec la map 3D (cameraJeuLibre, collisions, map 3D) et on ajoute la gridMapping et la bonne camera
+    
+    . void promenade(irr::ITimer *Timer); // quand le mode jeu libre commence, on retire tout ce qui a rapport avec le combat (gridMapping, cameraCombat) et on ajoute la map 3D et la bonne camera
+    
+    . void sceneRenderer(ITimer *Timer); // la while loop se passe ici
+et le jeu sera codé dans la while loop
+
+
+
+
+
+
+
+
+
